@@ -1,0 +1,18 @@
+extends mainLayout 
+
+block header 
+    script(src="/chess-engine/engine.js")
+    script(src="/public/chess/script.js")
+    link(rel="stylesheet", href="/public/chess/style.css")
+
+block content 
+    #home(onclick="window.location.href = '/'") ⌂
+    #loading.centerNotif
+        #bounceball.loadingItem
+        #text.loadingItem WAITING FOR THE OTHER PLAYER
+        #invite.loadingItem 
+    #container 
+        #chess
+    #winnerWindow.centerNotif
+        #winnerText Winner: Black
+        #winner You Win

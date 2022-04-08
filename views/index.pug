@@ -1,0 +1,22 @@
+extends mainLayout
+
+block header
+    script(src="/socket.io/socket.io.js") 
+    script(src="/public/index/script.js")
+    link(rel="stylesheet", href="/public/index/style.css")
+block content 
+    #optionsContainer 
+        #twoPlayer.options Start Game
+        #computer.options Play With Computer
+        #createRoom.options Create Room
+            #pickColorContainer.container
+                #label Pick Color
+                select#colorSelect.joinEntry
+                    option(selected disabled hidden) Select
+                    option(value="w") White 
+                    option(value="b") Black
+        #joinRoom.options Join Room
+            #joinContainer.container
+                input#room.joinEntry(type="text", placeholder="Enter Room Code")
+                button#joinButton.joinEntry Join
+        #freePlay.options Free Play
