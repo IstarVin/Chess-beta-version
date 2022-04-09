@@ -614,7 +614,7 @@ class engine {
     }
 }
 
-const startChessEngine = () => new engine()
+const startChessEngine = (fen) => new engine(fen)
 
 if (typeof module !== "undefined") {
     module.exports = startChessEngine
