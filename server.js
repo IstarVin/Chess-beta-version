@@ -1,15 +1,14 @@
-const cookieParser = require('cookie-parser')
-const express = require('express')
-const app = express()
-const http = require('http')
-const server = http.createServer(app)
-const { Server } = require('socket.io')
-const io = new Server(server)
+const {
+    cookieParser,
+    express,
+    app,
+    io,
+    server,
+} = require('./libs/init')
 
-const chessIO = io.of("/chess")
+const PORT = process.env.PORT || 1234
 
 const chessRouter = require('./routers/chess-router')
-const PORT = process.env.PORT || 1234
 
 app.set('view engine', 'pug')
 app.use('/chess-engine.js', express.static('./libs/chess-engine.js'))
@@ -19,10 +18,6 @@ app.use(cookieParser())
 
 app.get('/', (req, res) => {
     res.render('index')
-})
-
-chessIO.on('connection', socket => {
-    
 })
 
 server.listen(PORT, () => {
