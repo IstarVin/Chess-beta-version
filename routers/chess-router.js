@@ -74,7 +74,7 @@ chessRouter.get('/dev', (req, res) => {
 chessRouter.get('/:id', (req, res) => {
     const dashedID = addDashes(req.params.id)
     const cookieKey = (req.cookies.key) ? req.cookies.key.substring(0, keyLength): null
-    const foundRoomId = (cookieKey) ? findRoomWithKey(cookieKey): null
+    const foundRoomId = (cookieKey && cookieKey !== 'spectator') ? findRoomWithKey(cookieKey): null
     if (dashedID !== req.params.id) res.redirect(`./${dashedID}`)
     else if (!req.cookies.key || (!foundRoomId && !req.cookies.key.includes('spectator'))) res.redirect(`./join-room?id=${addDashes(req.id)}`)
     else {
@@ -93,7 +93,14 @@ chessIO.on('connection', socket => {
         const room = checkIfRoomExist(id)
         if (room) {
             socket.join(id)
-            socket.emit('init', { fen: room.chess.fen })
+            socket.emit('init', { 
+                fen: room.chess.fen, 
+                status: (Object.keys(room.players).length === 2) ? 'ok': 'empty'
+            })
+            
+            if (color) socket.to(id).emit('opponent-connect', true)
+            else socket.io(id).emit('spectator-connect', true)
+
             socket.on('move', data => {
                 if (verifyKey(key, id)) {
                     resetRoomTimeout(id)
@@ -105,16 +112,18 @@ chessIO.on('connection', socket => {
                 if (color) {
                     socket.to(id).emit('opponent-disconnect', 
                     `${color === 'w' ? 'White': 'Black'} player disconnected. Reason: ${reason}`)
+
+                    if (Object.keys(room.players).length === 0 && rooms[id]) {
+                        if (room.chess.winner) {
+                            deleteRoom(id)
+                        }
+                        else {
+                            resetRoomTimeout(id)
+                        }
+                    }
                 }
-                if (Object.keys(room.players).length === 0 && rooms[id]) {
-                    console.log(room);
-                    if (room.chess.winner) {
-                        deleteRoom(id)
-                    }
-                    else {
-                        resetRoomTimeout(id)
-                    }
-                    
+                else {
+                    socket.to(id).emit('spectator-disconnect')
                 }
             })
         } 

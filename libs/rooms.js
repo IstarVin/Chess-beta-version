@@ -81,9 +81,6 @@ function deleteRoom(roomID) {
     delete rooms[roomID]
 }
 
-// function getRoom(roomID) {
-//     return rooms[roomID]
-// }
 function findWithKey(key) {
     for (const [roomID, roomValue] of Object.entries(rooms)) {
         for (const  [color, _key] of Object.entries(roomValue.players)) {
@@ -96,7 +93,7 @@ function findWithKey(key) {
 }
 
 function findRoomWithKey(key) {
-    return findWithKey(key)
+    return findWithKey(key).roomID
 }
 
 function findColorWithKey(key) {
@@ -120,10 +117,6 @@ function joinRoom(roomID, color, key) {
     rooms[roomID].players[color] = key
 }
 
-function name(params) {
-    
-}
-
 module.exports = {
     rooms,
     createRoom,
@@ -133,7 +126,6 @@ module.exports = {
     resetRoomTimeout,
     setRoomTimeout,
     deleteRoom,
-    // getRoom,
     generateKey,
     checkAvailableColor,
     checkIfRoomExist,

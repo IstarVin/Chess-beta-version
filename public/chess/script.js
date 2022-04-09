@@ -11,10 +11,23 @@ let _socket, _chess
         canMove = false
         const socket = _socket = io('/chess', { query: { key: cookie, id: roomID } })
 
+        const inviteLable = document.getElementById('invite')
+        const inviteLink = createElement('a', {
+            href: `/chess/join-room?id=${roomID}`,
+            rel: 'noopener noreferrer',
+            text: 'Invite Link'
+        })
+        inviteLable.appendChild(inviteLink)
+
+        const loading = document.getElementById('loading')
+
         socket.on('connect', () => {
             socket.on('init', data => {
                 fen = data.fen
-                console.log(fen);
+                if (data.status === 'ok') {
+                    loading.style.visibility = 'hidden'
+                    canMove = true
+                }
             })
 
             socket.on('move', data => {
@@ -22,11 +35,13 @@ let _socket, _chess
             })
 
             socket.on('opponent-connect', data => {
+                loading.style.visibility = 'hidden'
                 canMove = true
             })
 
             socket.on('opponent-disconnect', data => {
-                console.log(data);
+                loading.style.visibility = 'visible'
+                loading.innerText = data
             })
 
             socket.on('room-deleted', () => {
@@ -41,6 +56,8 @@ let _socket, _chess
             })
         })
     }
-    const engine = startChessEngine()
+    const engine = _chess = startChessEngine(fen)
+
+
 
 })()
