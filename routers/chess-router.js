@@ -110,7 +110,7 @@ chessIO.on('connection', socket => {
             })
             
             if (color) socket.to(id).emit('opponent-connect', true)
-            else socket.io(id).emit('spectator-connect', true)
+            else socket.to(id).emit('spectator-connect', true)
 
             socket.on('move', data => {
                 if (verifyKey(key, id)) {

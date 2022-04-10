@@ -4,5 +4,8 @@
     },
     "server": {
         
+    },
+    "issues": {
+        "waiting for player bug": false
     }
 }
