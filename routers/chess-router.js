@@ -82,6 +82,17 @@ chessRouter.get('/:id', (req, res) => {
     }
 })
 
+chessRouter.get('/:id/init', (req, res) => {
+    const room = checkIfRoomExist(cleanID(req.params.id))
+    if (room) {
+        res.json({
+            fen: room.chess.fen, 
+            status: (Object.keys(room.players).length === 2) ? 'ok': 'empty'
+        })
+    }
+    else res.sendStatus(404)
+})
+
 chessIO.on('connection', socket => {
     console.log('A user has connected')
 
@@ -104,7 +115,20 @@ chessIO.on('connection', socket => {
             socket.on('move', data => {
                 if (verifyKey(key, id)) {
                     resetRoomTimeout(id)
-                    socket.to(id).emit('move', data)
+                    if (data.color === room.chess.turn) {
+                        let [[fX, fY], [tX, tY]] = data.move.split(" ")
+                        fX = parseInt(fX)
+                        fY = parseInt(fY)
+                        tX = parseInt(tX)
+                        tY = parseInt(tY)
+                        // console.log(room.chess.fen);
+                        room.chess.move([fX, fY], [tX, tY], { promoteTo: data.promoteTo })
+                        // console.log(room.chess.fen);
+                        socket.to(id).emit('move', data)
+                    }
+                    else {
+                        socket.emit('unscync', 'reload')
+                    }
                 }
             })
             socket.on('disconnect', reason => {
