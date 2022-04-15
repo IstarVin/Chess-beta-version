@@ -1,7 +1,6 @@
-const e = require('express')
 const express = require('express')
 const { keyLength } = require('../configs')
-const { chessIO, cookieParser } = require('../libs/init')
+const { chessIO, cookieParser, requestIp } = require('../libs/init')
 const { 
     rooms,
     createRoom,
@@ -74,12 +73,9 @@ chessRouter.get('/dev', (req, res) => {
 chessRouter.get('/:id', (req, res) => {
     const dashedID = addDashes(req.params.id)
     const cookieKey = (req.cookies.key) ? req.cookies.key.substring(0, keyLength): null
-    const foundRoomId = (cookieKey && cookieKey !== 'spectator') ? findRoomWithKey(cookieKey): null
-    if (dashedID !== req.params.id) res.redirect(`./${dashedID}`)
-    else if (!req.cookies.key || (!foundRoomId && !req.cookies.key.includes('spectator'))) res.redirect(`./join-room?id=${addDashes(req.id)}`)
-    else {
-        res.render('chess')
-    }
+    const foundRoomId = (cookieKey) ? findRoomWithKey(cookieKey): null
+    if ((foundRoomId && foundRoomId === cleanID(req.params.id)) || cookieKey === 'spectator') res.render('chess')
+    else res.send('<script>setTimeout(() => window.location.href = "/", 3000)</script>Join room in the lobby or with the invite link')
 })
 
 chessRouter.get('/:id/init', (req, res) => {
@@ -87,6 +83,7 @@ chessRouter.get('/:id/init', (req, res) => {
     if (room) {
         res.json({
             fen: room.chess.fen, 
+            check: (room.chess.nextTurnChecked) ? room.chess.turn: null,
             status: (Object.keys(room.players).length === 2) ? 'ok': 'empty'
         })
     }
@@ -103,10 +100,13 @@ chessIO.on('connection', socket => {
         const color = queryKey.at(keyLength + 1)
         const room = checkIfRoomExist(id)
         if (room) {
+            if (room[`${color}TimeoutId`]) clearTimeout(room[`${color}TimeoutId`])
+            delete room[`${color}TimeoutId`]
             socket.join(id)
+            const enemy = (color === 'w') ? 'b': 'w'
             socket.emit('init', { 
                 fen: room.chess.fen, 
-                status: (Object.keys(room.players).length === 2) ? 'ok': 'empty'
+                status: (room.players[enemy + 'TimeoutId']) ? 'ok': 'empty'
             })
             
             if (color) socket.to(id).emit('opponent-connect', true)
@@ -121,9 +121,7 @@ chessIO.on('connection', socket => {
                         fY = parseInt(fY)
                         tX = parseInt(tX)
                         tY = parseInt(tY)
-                        // console.log(room.chess.fen);
                         room.chess.move([fX, fY], [tX, tY], { promoteTo: data.promoteTo })
-                        // console.log(room.chess.fen);
                         socket.to(id).emit('move', data)
                     }
                     else {
@@ -132,10 +130,18 @@ chessIO.on('connection', socket => {
                 }
             })
             socket.on('disconnect', reason => {
-                delete room.players[color]
+                room[`${color}TimeoutId`] = setTimeout(() => {
+                    delete room.players[color]
+                }, 120000)
                 if (color) {
-                    socket.to(id).emit('opponent-disconnect', 
-                    `${color === 'w' ? 'White': 'Black'} player disconnected. Reason: ${reason}`)
+                    if (reason === 'client namespace disconnect') {
+                        if (room[`${color}TimeoutId`]) {
+                            clearTimeout(room[`${color}TimeoutId`])
+                            delete room[`${color}TimeoutId`]
+                            delete room.players[color]
+                        }
+                    }
+                    socket.to(id).emit('opponent-disconnect', `${color === 'w' ? 'White': 'Black'} player disconnected. Reason: ${reason}`)
 
                     if (Object.keys(room.players).length === 0 && rooms[id]) {
                         if (room.chess.winner) {

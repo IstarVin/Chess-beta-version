@@ -1,12 +1,20 @@
 let _socket, _chess, _canMove
 (function () {
-    let _color = 'w'
+    let _color = null
     let canMove = true
+    let checked
     let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
     let socket
+    const exitToHome = document.getElementById('home')
+    exitToHome.addEventListener('click', () => {
+        window.location.href = '/'
+    })
+    
+    const loading = document.getElementById('loading')
 
     const roomID = getRoomID()
+    console.log(roomID);
     if (roomID) {
         const cookie = parseCookie().key
         _color = cookie.at(-1)
@@ -21,8 +29,6 @@ let _socket, _chess, _canMove
         })
         inviteLable.appendChild(inviteLink)
 
-        const loading = document.getElementById('loading')
-
         const http = new XMLHttpRequest()
         http.open('GET', `./${roomID}/init`, false)
         http.send()
@@ -31,6 +37,9 @@ let _socket, _chess, _canMove
         if (data.status === 'ok') {
             loading.style.visibility = 'hidden'
             canMove = true
+            if (data.check) {
+                checked = data.check
+            }
         }
 
         socket.on('connect', () => {
@@ -70,7 +79,7 @@ let _socket, _chess, _canMove
                 }
             })
         })
-    }
+    } else loading.style.visibility = 'hidden'
     const chess = _chess = startChessEngine(fen)
 
     const board = createElement('div', {
@@ -84,6 +93,10 @@ let _socket, _chess, _canMove
     chessElement.appendChild(turnLabel)
 
     const pgnContainer = document.getElementById('pgn')
+
+    exitToHome.onclick = () => {
+        socket.disconnect()
+    }
 
     const createBoard = () => {
         let i = 0
@@ -261,7 +274,7 @@ let _socket, _chess, _canMove
         else if (moveResult === "castle") {
             let rookX = (to[0] === 2) ? 0: 7
             let toRookX = (to[0] === 2) ? 3: 5
-            movePieceInBoard(filterPiece(rookX, to[1]), toRookX,  to[1])
+            movePieceInBoard(filterPiece(rookX, to[1]).id, toRookX,  to[1])
         }
 
         movePieceInBoard(piece, to[0], to[1])
@@ -270,7 +283,7 @@ let _socket, _chess, _canMove
 
         // printPGN()
         const checkedKing = document.getElementById(chess.turn + "K1")
-        checkedKing.removeAttribute('checked')
+        document.querySelector('[checked]')?.removeAttribute('checked')
 
         if (chess.nextTurnChecked){
             if (chess.winner) {
@@ -284,7 +297,7 @@ let _socket, _chess, _canMove
                 winnerWindowElement.style.visibility = 'visible'
                 //turnLabel.text("Winner: " + (chess.enemy))
             }
-
+            console.log('asd');
             checkedKing.setAttribute("checked", "")
         }
         
@@ -300,6 +313,11 @@ let _socket, _chess, _canMove
 
     createBoard()
     addPieces()
+
+    if (checked) {
+        document.getElementById(checked + 'K1').setAttribute('checked', '')
+        checked = null
+    }
 
     if (_color === "b") {
         board.classList.add("blackPerspective")

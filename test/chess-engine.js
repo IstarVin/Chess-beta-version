@@ -154,7 +154,6 @@ class engine {
                 const toRookX = (toX == 2) ? 3: 5
                 this.tempPGN += (toX == 2) ? "0-0-0": "0-0"
 
-                console.log(from, to);
                 this._move([fromX, fromY], [toX, toY])
                 this._move([fromRookX, fromY], [toRookX, toY])
 
@@ -220,12 +219,12 @@ class engine {
                         const shouldBeClearPathX = (pathX === 2) ? 3: 5
                         if (!this.utils.searchArray(validPaths.path, [shouldBeClearPathX, pathY]))
                             continue
-                        if (this.checkIfChecked(piece[0], this.placing)) break
                     }
                     validPaths[key].push(form)
                 }
             }
         }
+
         return validPaths
     }
 

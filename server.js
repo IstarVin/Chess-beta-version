@@ -20,6 +20,6 @@ app.get('/', (req, res) => {
     res.render('index')
 })
 
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`Chess server running on port ${PORT}`)
 })
