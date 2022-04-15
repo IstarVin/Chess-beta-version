@@ -28,6 +28,7 @@ function createElement(name, options = {}) {
 }
 
 const movePieceInBoard = (piece, x, y) => {
+    console.log(piece);
     const pieceElement = document.getElementById(piece)
     pieceElement.style.top = y * gridSize + 'px'
     pieceElement.style.left = x * gridSize + 'px'
